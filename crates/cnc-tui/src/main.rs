@@ -22,7 +22,7 @@ struct Args {
     #[arg(value_name = "FILE")]
     file: PathBuf,
 
-    #[arg(long, value_name = "PATH")]
+    #[arg(short = 'c', long, value_name = "PATH")]
     config: Option<PathBuf>,
 }
 

@@ -22,6 +22,12 @@ cargo build -p cnc-view-tui
 cargo run -p cnc-view-tui -- <path-to-gcode>
 ```
 
+With config:
+
+```
+cargo run -p cnc-view-tui -- -c ~/config.toml <path-to-gcode>
+```
+
 ## Keybindings (default)
 
 - View: `h/j/k/l` pan, `w/s/a/d` rotate, `+/-` zoom
@@ -73,3 +79,5 @@ code_comment = "#6c7086"
 code_label = "#f9e2af"
 code_axis = "#94e2d5"
 ```
+
+Keep multiple theme configs (e.g., Catppuccin vs Gruvbox) and pass `-c` to switch.
