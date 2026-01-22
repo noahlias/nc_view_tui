@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build -p cnc-view-tui --release
+
+      - name: Package (unix)
+        if: runner.os != 'Windows'
+        run: |
+          tar -czf cnc-view-tui-${{ runner.os }}.tar.gz -C target/release cnc-view-tui
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path target/release/cnc-view-tui.exe -DestinationPath cnc-view-tui-Windows.zip
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cnc-view-tui-*.tar.gz
+            cnc-view-tui-*.zip

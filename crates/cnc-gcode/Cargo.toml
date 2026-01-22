@@ -1,0 +1,8 @@
+[package]
+name = "cnc-gcode"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0"
+cnc-geom = { path = "../cnc-geom" }

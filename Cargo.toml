@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/cnc-geom",
+    "crates/cnc-gcode",
+    "crates/cnc-tui",
+]
+resolver = "2"
