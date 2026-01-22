@@ -28,6 +28,13 @@ With config:
 cargo run -p cnc-view-tui -- -c ~/config.toml <path-to-gcode>
 ```
 
+Theme examples:
+
+```
+cargo run -p cnc-view-tui -- -c examples/themes/catppuccin.toml <path-to-gcode>
+cargo run -p cnc-view-tui -- -c examples/themes/gruvbox.toml <path-to-gcode>
+```
+
 ## Keybindings (default)
 
 - View: `h/j/k/l` pan, `w/s/a/d` rotate, `+/-` zoom

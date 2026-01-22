@@ -53,4 +53,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/${{ matrix.target }}/release/cnc-view-tui${{ matrix.ext }}
+            target/${{ matrix.target }}/release/nc_view${{ matrix.ext }}

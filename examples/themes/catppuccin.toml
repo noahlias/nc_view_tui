@@ -1,0 +1,32 @@
+[projection]
+mode = "perspective"
+yaw_deg = -45.0
+pitch_deg = 70.0
+
+[parser]
+ignore_unknown_words = true
+ignore_missing_words = ["E"]
+
+[animation]
+speed_segments_per_sec = 800.0
+
+[ui]
+show_line_numbers = false
+canvas_marker = "braille"
+
+[theme]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+path_feed = "#89b4fa"
+path_rapid = "#6c7086"
+axis_x = "#f38ba8"
+axis_y = "#a6e3a1"
+axis_z = "#89b4fa"
+grid = "#45475a"
+status_fg = "#cdd6f4"
+status_bg = "#313244"
+code_keyword = "#cba6f7"
+code_number = "#fab387"
+code_comment = "#6c7086"
+code_label = "#f9e2af"
+code_axis = "#94e2d5"
