@@ -12,16 +12,13 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure release exists
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          tag="${{ github.ref_name }}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release already exists for $tag"
-          else
-            gh release create "$tag" --generate-notes
-          fi
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
 
   build-release:
     needs: create-release
@@ -76,6 +73,7 @@ jobs:
           Copy-Item -Path target/${{ matrix.target }}/release/nc_view${{ matrix.ext }} -Destination nc_view-${{ matrix.target }}${{ matrix.ext }}
 
       - name: Upload release asset
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload ${{ github.ref_name }} nc_view-${{ matrix.target }}${{ matrix.ext }} --clobber
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: nc_view-${{ matrix.target }}${{ matrix.ext }}
