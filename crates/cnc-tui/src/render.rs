@@ -25,7 +25,7 @@ pub fn draw(frame: &mut Frame<'_>, app: &mut App) {
 
     let theme = app.config.theme.clone();
     let canvas = Canvas::default()
-        .marker(ratatui::symbols::Marker::HalfBlock)
+        .marker(app.canvas_marker)
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -591,6 +591,7 @@ fn draw_help_popup(frame: &mut Frame<'_>, app: &App, area: ratatui::layout::Rect
         ("space", "Play/Pause animation"),
         ("tab", "Toggle focus (view/file)"),
         ("v", "Visual select (range)"),
+        ("m", "Toggle marker"),
         ("↑ / ↓", "Select file line"),
         ("PgUp/PgDn", "Page scroll"),
         ("q", "Quit"),

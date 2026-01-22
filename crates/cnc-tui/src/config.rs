@@ -120,6 +120,7 @@ pub struct KeyBindings {
     pub toggle_projection: KeySpec,
     pub toggle_help: KeySpec,
     pub toggle_visual: KeySpec,
+    pub toggle_marker: KeySpec,
 }
 
 impl KeyBindings {
@@ -190,6 +191,9 @@ impl KeyBindings {
         if self.toggle_visual.matches(key) {
             return Some(Action::ToggleVisual);
         }
+        if self.toggle_marker.matches(key) {
+            return Some(Action::ToggleMarker);
+        }
         None
     }
 }
@@ -218,6 +222,7 @@ pub enum Action {
     ToggleProjection,
     ToggleHelp,
     ToggleVisual,
+    ToggleMarker,
 }
 
 #[derive(Debug, Clone)]
@@ -302,6 +307,7 @@ struct KeysConfig {
     toggle_projection: String,
     toggle_help: String,
     toggle_visual: String,
+    toggle_marker: String,
 }
 
 impl Default for KeysConfig {
@@ -329,6 +335,7 @@ impl Default for KeysConfig {
             toggle_projection: "p".to_string(),
             toggle_help: "?".to_string(),
             toggle_visual: "v".to_string(),
+            toggle_marker: "m".to_string(),
         }
     }
 }
@@ -360,6 +367,7 @@ impl TryFrom<KeysConfig> for KeyBindings {
             toggle_projection: parse_key_spec(&value.toggle_projection)?,
             toggle_help: parse_key_spec(&value.toggle_help)?,
             toggle_visual: parse_key_spec(&value.toggle_visual)?,
+            toggle_marker: parse_key_spec(&value.toggle_marker)?,
         })
     }
 }
@@ -544,18 +552,21 @@ impl TryFrom<AnimationConfig> for AnimationSettings {
 #[derive(Debug, Clone)]
 pub struct UiSettings {
     pub show_line_numbers: bool,
+    pub canvas_marker: ratatui::symbols::Marker,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 struct UiConfig {
     show_line_numbers: bool,
+    canvas_marker: String,
 }
 
 impl Default for UiConfig {
     fn default() -> Self {
         Self {
             show_line_numbers: false,
+            canvas_marker: "braille".to_string(),
         }
     }
 }
@@ -564,9 +575,23 @@ impl TryFrom<UiConfig> for UiSettings {
     type Error = anyhow::Error;
 
     fn try_from(value: UiConfig) -> Result<Self> {
+        let canvas_marker = parse_marker(&value.canvas_marker)?;
         Ok(Self {
             show_line_numbers: value.show_line_numbers,
+            canvas_marker,
         })
+    }
+}
+
+fn parse_marker(raw: &str) -> Result<ratatui::symbols::Marker> {
+    let value = raw.trim().to_ascii_lowercase();
+    match value.as_str() {
+        "braille" => Ok(ratatui::symbols::Marker::Braille),
+        "halfblock" | "half_block" | "half-block" => Ok(ratatui::symbols::Marker::HalfBlock),
+        "dot" => Ok(ratatui::symbols::Marker::Dot),
+        "block" => Ok(ratatui::symbols::Marker::Block),
+        "bar" => Ok(ratatui::symbols::Marker::Bar),
+        _ => Err(anyhow!("unknown canvas_marker: {}", raw)),
     }
 }
 
@@ -694,4 +719,21 @@ fn parse_hex_color(raw: &str) -> Option<Color> {
     let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
     let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
     Some(Color::Rgb(r, g, b))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_marker_values() {
+        assert!(matches!(parse_marker("braille").unwrap(), ratatui::symbols::Marker::Braille));
+        assert!(matches!(
+            parse_marker("halfblock").unwrap(),
+            ratatui::symbols::Marker::HalfBlock
+        ));
+        assert!(matches!(parse_marker("dot").unwrap(), ratatui::symbols::Marker::Dot));
+        assert!(matches!(parse_marker("block").unwrap(), ratatui::symbols::Marker::Block));
+        assert!(matches!(parse_marker("bar").unwrap(), ratatui::symbols::Marker::Bar));
+    }
 }

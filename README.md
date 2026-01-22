@@ -54,6 +54,7 @@ speed_segments_per_sec = 800.0
 
 [ui]
 show_line_numbers = false
+canvas_marker = "braille"
 
 [theme]
 background = "#1e1e2e"

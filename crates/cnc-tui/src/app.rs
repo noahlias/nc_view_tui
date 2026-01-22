@@ -36,6 +36,7 @@ pub struct App {
     pub file_panel: FilePanelState,
     pub playback: PlaybackState,
     pub show_help: bool,
+    pub canvas_marker: ratatui::symbols::Marker,
 }
 
 impl App {
@@ -52,6 +53,7 @@ impl App {
             pitch: config.projection.pitch_deg.to_radians(),
             projection: config.projection.mode,
         };
+        let canvas_marker = config.ui.canvas_marker;
         let playback = PlaybackState::new(config.animation.speed_segments_per_sec);
         let file_panel = FilePanelState::new(file_lines.len());
         Self {
@@ -65,6 +67,7 @@ impl App {
             file_panel,
             playback,
             show_help: false,
+            canvas_marker,
         }
     }
 
@@ -113,6 +116,12 @@ impl App {
                 if self.file_panel.focus == PanelFocus::File {
                     self.file_panel.toggle_visual();
                 }
+            }
+            Action::ToggleMarker => {
+                self.canvas_marker = match self.canvas_marker {
+                    ratatui::symbols::Marker::Braille => ratatui::symbols::Marker::HalfBlock,
+                    _ => ratatui::symbols::Marker::Braille,
+                };
             }
             Action::ToggleFocus => self.file_panel.toggle_focus(),
             Action::LineUp => {
@@ -424,5 +433,50 @@ impl PlaybackState {
             return total;
         }
         (self.position.floor() as usize).min(total)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Config;
+    use cnc_gcode::{Toolpath, ToolpathStats};
+    use std::fs;
+
+    #[test]
+    fn reset_view_restores_initial() {
+        let tmp = std::env::temp_dir().join("cnc_view_tui_test_config.toml");
+        fs::write(
+            &tmp,
+            r#"
+[projection]
+mode = "perspective"
+yaw_deg = -30.0
+pitch_deg = 40.0
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load(Some(tmp)).unwrap();
+        let toolpath = Toolpath {
+            segments: Vec::new(),
+            bounds: Bounds3::new(),
+            stats: ToolpathStats::default(),
+            line_segment_ends: vec![0],
+        };
+        let mut app = App::new(config, toolpath, PathBuf::from("demo.nc"), vec!["G0 X0".to_string()]);
+
+        app.view.yaw += 1.0;
+        app.view.pitch -= 1.0;
+        app.view.pan = Vec2::new(5.0, -3.0);
+        app.view.zoom = 2.0;
+
+        app.apply_action(Action::ResetView);
+
+        assert!((app.view.yaw - app.initial_view.yaw).abs() < 1e-6);
+        assert!((app.view.pitch - app.initial_view.pitch).abs() < 1e-6);
+        assert!((app.view.pan.x - app.initial_view.pan.x).abs() < 1e-6);
+        assert!((app.view.pan.y - app.initial_view.pan.y).abs() < 1e-6);
+        assert!((app.view.zoom - app.initial_view.zoom).abs() < 1e-6);
     }
 }
