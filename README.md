@@ -2,6 +2,8 @@
 
 Terminal-based CNC toolpath viewer for GRBL-style G-code. Parses G0/G1/G2/G3 moves, projects to a 3D view, and renders with a side-by-side code panel.
 
+[![asciicast](https://asciinema.org/a/577HkbT74mhFKo7p.svg)](https://asciinema.org/a/577HkbT74mhFKo7p)
+
 ## Features
 
 - 3D toolpath projection with side-view default
