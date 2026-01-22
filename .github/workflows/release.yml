@@ -9,7 +9,22 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release already exists for $tag"
+          else
+            gh release create "$tag" --generate-notes
+          fi
+
   build-release:
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -49,8 +64,18 @@ jobs:
       - name: Build
         run: cargo build -p cnc-view-tui --release --target ${{ matrix.target }}
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            target/${{ matrix.target }}/release/nc_view${{ matrix.ext }}
+      - name: Prepare artifact (unix)
+        if: runner.os != 'Windows'
+        run: |
+          cp target/${{ matrix.target }}/release/nc_view${{ matrix.ext }} nc_view-${{ matrix.target }}${{ matrix.ext }}
+
+      - name: Prepare artifact (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Copy-Item -Path target/${{ matrix.target }}/release/nc_view${{ matrix.ext }} -Destination nc_view-${{ matrix.target }}${{ matrix.ext }}
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ github.ref_name }} nc_view-${{ matrix.target }}${{ matrix.ext }} --clobber
