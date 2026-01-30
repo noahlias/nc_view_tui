@@ -222,6 +222,30 @@ fn draw_plane(ctx: &mut ratatui::widgets::canvas::Context, app: &App, params: Pr
 }
 
 fn build_status_line(app: &App) -> String {
+    let (status_icon, status_label) = if app.toolpath.segments.is_empty() {
+        ("", "empty toolpath")
+    } else {
+        ("", "ready")
+    };
+    let file_icon = "";
+    let sel_icon = "";
+    let mode_icon = if app.file_panel.visual { "" } else { "" };
+    let seg_icon = "";
+    let zoom_icon = "";
+    let projection_icon = "";
+    let playback_icon = if app.playback.active {
+        if app.playback.playing {
+            ""
+        } else {
+            ""
+        }
+    } else {
+        ""
+    };
+    let focus_icon = match app.file_panel.focus {
+        PanelFocus::Viewport => "",
+        PanelFocus::File => "",
+    };
     let file = app
         .file_path
         .file_name()
@@ -248,16 +272,26 @@ fn build_status_line(app: &App) -> String {
     let (line_start, line_end) = app.file_panel.selection_range(app.file_lines.len());
     let mode = if app.file_panel.visual { "visual" } else { "single" };
     format!(
-        "{} | sel:{}-{} | {} | seg:{}/{} | zoom:{:.2} | {} | {} | {}",
+        "{} {} | {} {} | {} sel:{}-{} | {} {} | {} seg:{}/{} | {} zoom:{:.2} | {} {} | {} {} | {} {}",
+        status_icon,
+        status_label,
+        file_icon,
         file,
+        sel_icon,
         line_start + 1,
         line_end + 1,
+        mode_icon,
         mode,
+        seg_icon,
         visible,
         app.toolpath.segments.len(),
+        zoom_icon,
         app.view.zoom,
+        projection_icon,
         projection,
+        playback_icon,
         playback,
+        focus_icon,
         focus
     )
 }
@@ -576,26 +610,26 @@ fn draw_help_popup(frame: &mut Frame<'_>, app: &App, area: ratatui::layout::Rect
     let desc_style = Style::default().fg(theme.foreground);
     let mut lines = Vec::new();
     lines.push(TextLine::from(vec![
-        Span::styled("Key", Style::default().fg(theme.axis_x)),
+        Span::styled(" Key", Style::default().fg(theme.axis_x)),
         Span::raw("  "),
-        Span::styled("Description", Style::default().fg(theme.axis_x)),
+        Span::styled(" Description", Style::default().fg(theme.axis_x)),
     ]));
     lines.push(TextLine::from(""));
     let entries = [
-        ("h/j/k/l", "Pan view"),
-        ("w/s/a/d", "Rotate view"),
-        ("+ / -", "Zoom in/out"),
-        ("r", "Reset pan+zoom"),
-        ("g", "Fit to toolpath"),
-        ("p", "Toggle projection"),
-        ("space", "Play/Pause animation"),
-        ("tab", "Toggle focus (view/file)"),
-        ("v", "Visual select (range)"),
-        ("m", "Toggle marker"),
-        ("↑ / ↓", "Select file line"),
-        ("PgUp/PgDn", "Page scroll"),
-        ("q", "Quit"),
-        ("?", "Close help"),
+        ("h/j/k/l", " Pan view"),
+        ("w/s/a/d", " Rotate view"),
+        ("+ / -", " Zoom in/out"),
+        ("r", " Reset pan+zoom"),
+        ("g", " Fit to toolpath"),
+        ("p", " Toggle projection"),
+        ("space", "/ Play/Pause animation"),
+        ("tab", "/ Toggle focus (view/file)"),
+        ("v", " Visual select (range)"),
+        ("m", " Toggle marker"),
+        ("↑ / ↓", " Select file line"),
+        ("PgUp/PgDn", "/ Page scroll"),
+        ("q", " Quit"),
+        ("?", " Close help"),
     ];
     let key_width = 10usize;
     for (key, desc) in entries {
