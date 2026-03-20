@@ -11,6 +11,7 @@ Terminal-based CNC toolpath viewer for GRBL-style G-code. Parses G0/G1/G2/G3 mov
 - Animation (play/pause) for toolpath reveal
 - Code panel with visual range selection to preview combined toolpath
 - Built-in ignore rules for non-G-code words
+- OBJ export for feed toolpaths as 3D tube mesh (with MTL material)
 
 ## Build
 
@@ -36,6 +37,24 @@ Theme examples:
 cargo run -p cnc-view-tui -- -c examples/themes/catppuccin.toml <path-to-gcode>
 cargo run -p cnc-view-tui -- -c examples/themes/gruvbox.toml <path-to-gcode>
 ```
+
+## Export OBJ
+
+Export feed moves as a 3D tube mesh for external viewers:
+
+```
+cargo run -p cnc-view-tui -- <path-to-gcode> --export-obj out/toolpath.obj --export-only
+```
+
+Control tube detail:
+
+```
+cargo run -p cnc-view-tui -- <path-to-gcode> --export-obj out/toolpath.obj --export-only --export-radius 0.3 --export-sides 16
+```
+
+Output files:
+- `<name>.obj` (mesh geometry)
+- `<name>.mtl` (material color)
 
 ## Keybindings (default)
 

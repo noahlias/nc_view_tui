@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 use crossterm::event::{self, Event, KeyEventKind};
 use crossterm::execute;
@@ -24,6 +24,18 @@ struct Args {
 
     #[arg(short = 'c', long, value_name = "PATH")]
     config: Option<PathBuf>,
+
+    #[arg(long, value_name = "PATH")]
+    export_obj: Option<PathBuf>,
+
+    #[arg(long, default_value_t = 0.4)]
+    export_radius: f64,
+
+    #[arg(long, default_value_t = 12)]
+    export_sides: u32,
+
+    #[arg(long)]
+    export_only: bool,
 }
 
 fn main() -> Result<()> {
@@ -36,6 +48,21 @@ fn main() -> Result<()> {
     )
     .with_ignore_unknown_words(config.parser.ignore_unknown_words);
     let toolpath = cnc_gcode::parse_file_with_options(&args.file, options)?;
+
+    if let Some(path) = args.export_obj.as_ref() {
+        let export_options = cnc_gcode::ObjExportOptions {
+            radius: args.export_radius,
+            radial_sides: args.export_sides,
+            ..cnc_gcode::ObjExportOptions::default()
+        };
+        cnc_gcode::export_toolpath_obj(&toolpath, path, &export_options)?;
+        if args.export_only {
+            return Ok(());
+        }
+    } else if args.export_only {
+        return Err(anyhow!("--export-only requires --export-obj <PATH>"));
+    }
+
     let mut app = App::new(config, toolpath, args.file, file_lines);
 
     run(&mut app)

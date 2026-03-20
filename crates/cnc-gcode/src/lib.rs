@@ -2,9 +2,15 @@ use anyhow::{anyhow, Context, Result};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::iter::Peekable;
 use std::path::Path;
+use std::str::Chars;
 
 use cnc_geom::{Bounds3, Vec3};
+
+mod obj;
+
+pub use obj::{export_toolpath_obj, ObjExportOptions};
 
 const ARC_SEGMENT_LENGTH: f64 = 0.5;
 
@@ -580,6 +586,10 @@ fn parse_words(line: &str, options: &ParseOptions) -> Result<Vec<Word>> {
         if ch.is_ascii_alphabetic() {
             let letter = ch.to_ascii_uppercase();
             chars.next();
+            if should_skip_label_token(&chars) {
+                skip_token_tail(&mut chars);
+                continue;
+            }
             let mut num = String::new();
             while let Some(next) = chars.peek() {
                 if next.is_ascii_whitespace() || next.is_ascii_alphabetic() {
@@ -603,6 +613,29 @@ fn parse_words(line: &str, options: &ParseOptions) -> Result<Vec<Word>> {
         }
     }
     Ok(words)
+}
+
+fn should_skip_label_token(chars: &Peekable<Chars<'_>>) -> bool {
+    let mut lookahead = chars.clone();
+    match lookahead.next() {
+        Some(next) if next.is_ascii_whitespace() => false,
+        Some(next) if next.is_ascii_digit() || next == '.' => false,
+        Some('+') | Some('-') => match lookahead.next() {
+            Some(after_sign) => !(after_sign.is_ascii_digit() || after_sign == '.'),
+            None => false,
+        },
+        Some(_) => true,
+        None => false,
+    }
+}
+
+fn skip_token_tail(chars: &mut Peekable<Chars<'_>>) {
+    while let Some(next) = chars.peek() {
+        if next.is_ascii_whitespace() {
+            break;
+        }
+        chars.next();
+    }
 }
 
 fn strip_comments(line: &str) -> String {
@@ -677,5 +710,23 @@ mod tests {
         parser.parse_line("T1 E", 1).unwrap();
         let toolpath = parser.finish().unwrap();
         assert_eq!(toolpath.segments.len(), 0);
+    }
+
+    #[test]
+    fn skip_label_tokens_without_ignore_flags() {
+        let mut parser = Parser::new(ParseOptions::default());
+        parser.parse_line("01_START", 1).unwrap();
+        parser.parse_line("FACE_START", 2).unwrap();
+        parser.parse_line("G01 X10 Y5", 3).unwrap();
+        let toolpath = parser.finish().unwrap();
+        assert_eq!(toolpath.segments.len(), 1);
+        assert_eq!(toolpath.segments[0].end, Vec3::new(10.0, 5.0, 0.0));
+    }
+
+    #[test]
+    fn missing_value_for_real_axis_still_errors() {
+        let mut parser = Parser::new(ParseOptions::default());
+        let err = parser.parse_line("G01 X Y5", 1).unwrap_err();
+        assert!(format!("{:#}", err).contains("missing value for X"));
     }
 }
